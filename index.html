@@ -65,10 +65,11 @@ async function loadAll(soft){
   me=P.find(x=>x.id===user.id);
   if(soft){typing?pend=true:render()}
 }
+function th(m){const k=[['Invalid login credentials','อีเมลหรือรหัสผ่านไม่ถูกต้อง'],['already registered','อีเมลนี้สมัครไว้แล้ว ให้กด "เข้าสู่ระบบ"'],['Email not confirmed','ยังไม่ได้ยืนยันอีเมล กรุณาตรวจกล่องจดหมาย'],['rate limit','ส่งอีเมลถี่เกินไป กรุณารอสักครู่แล้วลองใหม่'],['valid email','รูปแบบอีเมลไม่ถูกต้อง']];for(const [a,b] of k)if(String(m).toLowerCase().includes(a.toLowerCase()))return b;return m}
 function loginView(){
   $('#app').innerHTML=`<div class="card" style="max-width:380px;margin:40px auto"><h1>เข้าสู่ระบบ</h1>${msg?`<div class="msg">${esc(msg)}</div>`:''}
-  <label>อีเมล</label><input id="em" type="email"><label>รหัสผ่าน</label><input id="pw" type="password">
-  <label>ชื่อ-สกุล (เฉพาะสมัครใหม่)</label><input id="fn">
+  <label>อีเมล</label><input id="em" type="email"><label>รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label><input id="pw" type="password">
+  <label>ชื่อ-สกุล (กรอกเฉพาะตอนสมัครใหม่)</label><input id="fn">
   <button class="btn" data-a="login">เข้าสู่ระบบ</button><button class="btn ghost" data-a="signup">สมัครสมาชิก</button></div>`}
 
 function render(){
@@ -191,8 +192,11 @@ document.addEventListener('click',async e=>{
   const a=b.dataset.a,v=b.dataset.v;msg='';
   try{
     if(a==='login'||a==='signup'){
-      const em=$('#em').value,pw=$('#pw').value;
-      const r=a==='login'?await sb.auth.signInWithPassword({email:em,password:pw}):await sb.auth.signUp({email:em,password:pw,options:{data:{full_name:$('#fn').value}}});
+      const em=$('#em').value.trim(),pw=$('#pw').value,fn=$('#fn').value.trim();
+      if(!em||!pw)throw new Error('กรุณากรอกอีเมลและรหัสผ่าน');
+      if(a==='signup'&&!fn)throw new Error('กรุณากรอกชื่อ-สกุล');
+      if(a==='signup'&&pw.length<6)throw new Error('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');
+      const r=a==='login'?await sb.auth.signInWithPassword({email:em,password:pw}):await sb.auth.signUp({email:em,password:pw,options:{data:{full_name:fn}}});
       if(r.error)throw r.error;if(a==='signup'&&!r.data.session){msg='สมัครแล้ว กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ';return loginView()}
       return boot()}
     if(a==='out'){await sb.auth.signOut();if(chan)sb.removeChannel(chan);me=null;return loginView()}
@@ -220,7 +224,8 @@ document.addEventListener('click',async e=>{
         else path=await signedPdf(s,cm);
         await rpc(s.id,a==='approve'?'approve':'forward',a==='fwd'?$('#to').value:null,cm,path)}
       busy=false;sel=null;await loadAll();msg='ดำเนินการเรียบร้อย'}
-  }catch(err){busy=false;msg=err.message||String(err)}
+  }catch(err){busy=false;msg=th(err.message||String(err))}
+  if(!me)return loginView();
   render();if(tab==='send'&&!sel)fillSend();
 });
 const _r=render;render=function(){_r();if(tab==='send'&&!sel&&$('#sc')&&!$('#sto').options.length)fillSend()};
