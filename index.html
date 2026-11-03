@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบเสนอเอกสารและลงนามออนไลน์</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+:root{--bg:#f4f6f5;--card:#fff;--tx:#1b2a27;--mut:#62706c;--line:#dde3e0;--pri:#0f6b5c;--bad:#b42318;--warn:#b54708}
+@media(prefers-color-scheme:dark){:root{--bg:#121816;--card:#1a2321;--tx:#e6eeeb;--mut:#9aaaa5;--line:#2a3633;--pri:#4fc3ad;--bad:#ff8d82;--warn:#ffb36b}}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.55 Sarabun,"Noto Sans Thai",system-ui,sans-serif}
+main{max-width:820px;margin:0 auto;padding:14px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+h1{font-size:19px;margin:0}h2{font-size:17px;margin:18px 0 8px}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}
+.tabs button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--tx);padding:7px 14px;border-radius:999px;font:inherit;cursor:pointer}
+.tabs button.on{background:var(--pri);border-color:var(--pri);color:var(--bg)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:9px}
+label{display:block;font-size:14px;color:var(--mut);margin:9px 0 3px}
+input,select,textarea{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--tx);font:inherit}
+.btn{border:0;background:var(--pri);color:var(--bg);padding:8px 15px;border-radius:7px;font:inherit;cursor:pointer;margin-top:9px;margin-right:6px}
+.btn.bad{background:var(--bad);color:#fff}.btn.ghost{background:none;color:var(--pri);border:1px solid var(--line)}
+.mut{color:var(--mut);font-size:14px}.tag{font-size:13px;padding:1px 9px;border-radius:999px;border:1px solid var(--line)}
+.msg{padding:8px 10px;border-radius:7px;background:var(--card);border:1px solid var(--warn);color:var(--warn);margin-bottom:10px}
+.hist{border-left:3px solid var(--line);padding-left:10px;margin:6px 0;font-size:14px}
+canvas{width:100%;height:130px;border:1px dashed var(--line);border-radius:8px;background:#fff;touch-action:none}
+a{color:var(--pri)}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+</style>
+</head>
+<body>
+<main><div id="app" class="mut">กำลังโหลด…</div></main>
+<script>
+/* ===== ตั้งค่า: ใส่ค่าจาก Supabase > Project Settings > API ===== */
+const SUPABASE_URL='https://qmqggwtjiuaextldmzmc.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_aoTXCDKRc_PdQkcMVw0Z3Q_kac0XWgP';
+/* ================================================================ */
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ROLE={teacher:'ครู',leader:'หัวหน้าฝ่าย',vice:'รองผู้อำนวยการ',principal:'ผู้อำนวยการ',admin:'ผู้ดูแลระบบ'};
+const RANK={teacher:0,leader:1,vice:2,principal:3,admin:-1};
+const STAT={draft:'ร่าง',pending:'อยู่ระหว่างพิจารณา',returned:'ส่งคืนแก้ไข',approved:'อนุมัติแล้ว'};
+const fmt=t=>new Date(t).toLocaleString('th-TH',{dateStyle:'medium',timeStyle:'short'});
+let me=null,P=[],C=[],T=[],S=[],A=[],N=[],tab,sel=null,msg='',busy=false,typing=false,pend=false,chan;
+const pf=id=>P.find(p=>p.id===id)||{full_name:'ไม่ทราบชื่อ',role:'teacher'};
+const pn=id=>pf(id).full_name||'(ไม่ระบุชื่อ)';
+const cat=id=>(C.find(c=>c.id===id)||{});
+
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){return loginView()}
+  await loadAll();
+  tab=me.role==='admin'?'tasks':me.role==='teacher'?'send':'todo';
+  chan=sb.channel('x').on('postgres_changes',{event:'*',schema:'public'},()=>loadAll(true)).subscribe();
+  render();
+}
+async function loadAll(soft){
+  const {data:{user}}=await sb.auth.getUser();
+  const q=(t,f)=>f(sb.from(t).select('*'));
+  const [p,c,t,s,a,n]=await Promise.all([q('profiles',x=>x),q('categories',x=>x.order('id')),q('task_defs',x=>x.order('due_date')),
+    q('submissions',x=>x.order('updated_at',{ascending:false})),q('actions',x=>x.order('created_at')),q('notifications',x=>x.order('created_at',{ascending:false}).limit(40))]);
+  P=p.data||[];C=c.data||[];T=t.data||[];S=s.data||[];A=a.data||[];N=n.data||[];
+  me=P.find(x=>x.id===user.id);
+  if(soft){typing?pend=true:render()}
+}
+function loginView(){
+  $('#app').innerHTML=`<div class="card" style="max-width:380px;margin:40px auto"><h1>เข้าสู่ระบบ</h1>${msg?`<div class="msg">${esc(msg)}</div>`:''}
+  <label>อีเมล</label><input id="em" type="email"><label>รหัสผ่าน</label><input id="pw" type="password">
+  <label>ชื่อ-สกุล (เฉพาะสมัครใหม่)</label><input id="fn">
+  <button class="btn" data-a="login">เข้าสู่ระบบ</button><button class="btn ghost" data-a="signup">สมัครสมาชิก</button></div>`}
+
+function render(){
+  if(!me)return;
+  const unread=N.filter(n=>!n.read).length;
+  const r=me.role,tabs=[];
+  if(r==='teacher')tabs.push(['send','ส่งงาน'],['mine','งานของฉัน']);
+  else if(r!=='admin')tabs.push(['todo','รอดำเนินการ'],['mine','ผ่านมือฉัน'],['sign','ลายเซ็น']);
+  if(r==='principal'||r==='admin')tabs.push(['check','ความครบถ้วน']);
+  if(r==='admin')tabs.push(['tasks','กำหนดงาน'],['users','ผู้ใช้']);
+  tabs.push(['noti','แจ้งเตือน'+(unread?` (${unread})`:'')]);
+  let body=sel?vDetail():({send:vSend,mine:vMine,todo:vTodo,sign:vSign,check:vCheck,tasks:vTasks,users:vUsers,noti:vNoti}[tab]||vMine)();
+  $('#app').innerHTML=`<header><h1>📄 เสนอเอกสารและลงนาม</h1><span class="mut">${esc(me.full_name||'(ยังไม่ตั้งชื่อ)')} · ${ROLE[r]} <button class="btn ghost" data-a="out" style="margin:0">ออก</button></span></header>
+  ${msg?`<div class="msg">${esc(msg)}</div>`:''}<div class="tabs">${tabs.map(t=>`<button class="${t[0]===tab&&!sel?'on':''}" data-a="tab" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>${body}`;
+  if(tab==='sign'&&!sel)initPad();
+}
+const opts=(l,f)=>l.map(x=>`<option value="${x.id}">${esc(f(x))}</option>`).join('');
+const lbl=p=>`${p.full_name||'(ไม่ระบุชื่อ)'} · ${ROLE[p.role]}${p.department?' ('+p.department+')':''}`;
+
+function card(s){return `<div class="card row"><div><b>${esc(s.title)}</b><div class="mut">${esc(cat(s.category_id).name)} · ${esc(pn(s.teacher_id))} · ${fmt(s.updated_at)}</div>
+  <div class="mut">${STAT[s.status]}${s.holder?' · อยู่กับ '+esc(pn(s.holder)):''}</div></div><button class="btn ghost" data-a="open" data-v="${s.id}" style="margin:0">เปิด</button></div>`}
+function vMine(){const l=S.filter(s=>me.role==='teacher'?s.teacher_id===me.id:true);return l.map(card).join('')||'<p class="mut">ยังไม่มีเอกสาร</p>'}
+function vTodo(){const l=S.filter(s=>s.holder===me.id);return `<h2>รอคุณดำเนินการ (${l.length})</h2>`+(l.map(card).join('')||'<p class="mut">ไม่มีเอกสารค้าง</p>')}
+function fwdTargets(me,memo){return P.filter(p=>RANK[p.role]>RANK[me.role]&&(memo||RANK[p.role]===RANK[me.role]+1))}
+
+function vSend(){
+  const mine=S.filter(s=>s.teacher_id===me.id);
+  const todo=T.filter(t=>t.active&&!mine.some(s=>s.task_def_id===t.id&&s.status!=='draft'));
+  return `${todo.length?`<div class="card"><b>งานที่ยังไม่ได้ส่ง</b>${todo.map(t=>`<div>• ${esc(t.title)} <span class="mut">${esc(cat(t.category_id).name)} ${t.due_date?'· กำหนด '+t.due_date:''}</span></div>`).join('')}</div>`:''}
+  <div class="card"><b>ส่งไฟล์ PDF</b><label>หมวดหมู่</label><select id="sc" data-a="chg">${opts(C,c=>c.name)}</select>
+  <div id="sf"></div><label>ชื่อเอกสาร</label><input id="st"><label>ไฟล์ PDF</label><input id="sfile" type="file" accept="application/pdf">
+  <label>ส่งให้</label><select id="sto"></select><label>ข้อความถึงผู้รับ (ถ้ามี)</label><input id="scm">
+  <button class="btn" data-a="send">${busy?'กำลังส่ง…':'ส่งเอกสาร'}</button></div>`}
+function fillSend(){ // อัปเดตช่องงาน/ผู้รับตามหมวดที่เลือก
+  const c=C.find(x=>x.id==$('#sc').value);if(!c)return;
+  $('#sf').innerHTML=c.is_memo?'':`<label>งานที่กำหนด</label><select id="std"><option value="">— งานอื่น —</option>${opts(T.filter(t=>t.active&&t.category_id===c.id),t=>t.title)}</select>`;
+  const tg=fwdTargets(me,c.is_memo).sort((a,b)=>(b.department===me.department)-(a.department===me.department));
+  $('#sto').innerHTML=opts(tg,lbl);
+}
+function vSign(){return `<div class="card"><b>ลายเซ็นของคุณ</b><div class="mut">วาดครั้งเดียว ระบบจะใช้ประทับทุกครั้งที่ลงนาม</div><canvas id="pad"></canvas>
+  <button class="btn ghost" data-a="clr">ล้าง</button><button class="btn" data-a="savesig">บันทึกลายเซ็น</button></div>`}
+
+function vDetail(){
+  const s=S.find(x=>x.id===sel);if(!s)return '';
+  const hist=A.filter(a=>a.submission_id===s.id);
+  const mine=s.holder===me.id,memo=cat(s.category_id).is_memo;
+  let act='';
+  if(mine){
+    const fw=fwdTargets(me,memo);
+    const back=[...new Set([s.teacher_id,...hist.map(h=>h.actor_id)])].filter(i=>i!==me.id);
+    const isT=me.role==='teacher',isP=me.role==='principal';
+    act=`<div class="card"><b>ดำเนินการ</b>
+    ${isT?`<label>แนบไฟล์ใหม่ (ถ้าแก้ไขแล้ว)</label><input id="nf" type="file" accept="application/pdf">`:''}
+    <label>ความเห็น${isT?'':' (จะประทับในไฟล์)'}</label><textarea id="cm" rows="3"></textarea>
+    ${isP?`<button class="btn" data-a="approve">✍️ ลงนามและอนุมัติรับเข้าระบบ</button>`:`<label>เสนอต่อ</label><select id="to">${opts(fw,lbl)}</select><button class="btn" data-a="fwd">${isT?'ส่งต่อ':'✍️ ลงนามและเสนอต่อ'}</button>`}
+    ${isT?'':`<hr><label>ส่งคืนให้แก้ไข</label><select id="bk">${opts(back.map(pf),lbl)}</select><button class="btn bad" data-a="ret">ส่งคืน</button>`}</div>`}
+  return `<button class="btn ghost" data-a="back">← กลับ</button><div class="card"><b>${esc(s.title)}</b>
+  <div class="mut">${esc(cat(s.category_id).name)} · ครู ${esc(pn(s.teacher_id))} · ${STAT[s.status]}${s.holder?' · อยู่กับ '+esc(pn(s.holder)):''}</div>
+  ${s.file_path?`<p><a href="#" data-a="view" data-v="${esc(s.file_path)}">เปิดไฟล์ PDF ล่าสุด</a></p>`:''}
+  <h2>ประวัติ</h2>${hist.map(h=>`<div class="hist"><b>${esc(pn(h.actor_id))}</b> ${({forward:'เสนอต่อ '+pn(h.to_user),return:'ส่งคืน '+pn(h.to_user),approve:'อนุมัติ'})[h.kind]} <span class="mut">${fmt(h.created_at)}</span>${h.comment?`<div>“${esc(h.comment)}”</div>`:''}</div>`).join('')||'<p class="mut">ยังไม่มีประวัติ</p>'}</div>${act}`}
+
+function vCheck(){
+  const teachers=P.filter(p=>p.role==='teacher');
+  return T.filter(t=>t.active).map(t=>{
+    const g=teachers.map(p=>{const l=S.filter(s=>s.teacher_id===p.id&&s.task_def_id===t.id&&s.status!=='draft').sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at));return {p,s:l[0]}});
+    const ls=f=>g.filter(f).map(x=>esc(x.p.full_name||'?')).join(', ')||'—';
+    return `<div class="card"><b>${esc(t.title)}</b> <span class="mut">${esc(cat(t.category_id).name)}</span>
+    <div class="mut">อนุมัติแล้ว ${g.filter(x=>x.s&&x.s.status==='approved').length}/${teachers.length} คน</div>
+    <div>ยังไม่ส่ง: ${ls(x=>!x.s)}</div><div>ส่งคืนแก้ไข: ${ls(x=>x.s&&x.s.status==='returned')}</div><div>อยู่ระหว่างพิจารณา: ${ls(x=>x.s&&x.s.status==='pending')}</div></div>`}).join('')||'<p class="mut">ยังไม่มีงานที่กำหนด</p>'}
+function vTasks(){return `<div class="card"><b>เพิ่มงานที่ครูต้องส่ง</b><label>หมวดหมู่</label><select id="tc">${opts(C.filter(c=>!c.is_memo),c=>c.name)}</select>
+  <label>ชื่องาน</label><input id="tt"><label>กำหนดส่ง</label><input id="td" type="date"><button class="btn" data-a="addt">เพิ่มงาน</button></div>
+  ${T.map(t=>`<div class="card row"><span>${esc(t.title)} <span class="mut">${esc(cat(t.category_id).name)} ${t.due_date||''}${t.active?'':' (ปิด)'}</span></span><span><button class="btn ghost" data-a="tgl" data-v="${t.id}" style="margin:0">${t.active?'ปิดงาน':'เปิดงาน'}</button></span></div>`).join('')}`}
+function vUsers(){return P.map(p=>`<div class="card"><b>${esc(p.full_name||'(ไม่ระบุชื่อ)')}</b><div class="row"><select data-u="${p.id}" data-f="role">${Object.keys(ROLE).map(k=>`<option value="${k}" ${k===p.role?'selected':''}>${ROLE[k]}</option>`).join('')}</select>
+  <input data-u="${p.id}" data-f="department" placeholder="ฝ่าย/กลุ่มสาระ" value="${esc(p.department||'')}" style="flex:1"></div></div>`).join('')+'<p class="mut">เปลี่ยนบทบาทแล้วบันทึกอัตโนมัติ (ช่องฝ่ายบันทึกเมื่อคลิกออกจากช่อง)</p>'}
+function vNoti(){return (N.map(n=>`<div class="card row"><span>${n.read?'':'🔵 '}${esc(n.message)}<div class="mut">${fmt(n.created_at)}</div></span>${n.submission_id?`<button class="btn ghost" data-a="nopen" data-v="${n.id}" style="margin:0">เปิด</button>`:''}</div>`).join(''))||'<p class="mut">ไม่มีการแจ้งเตือน</p>'}
+
+/* ----- ลายเซ็น / ประทับลง PDF ----- */
+let pad,drawing=false;
+function initPad(){const c=$('#pad');c.width=c.clientWidth*2;c.height=260;pad=c.getContext('2d');pad.lineWidth=5;pad.lineCap='round';
+  const pt=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*2,(e.clientY-r.top)*2]};
+  c.onpointerdown=e=>{drawing=true;pad.beginPath();pad.moveTo(...pt(e));c.setPointerCapture(e.pointerId)};
+  c.onpointermove=e=>{if(drawing){pad.lineTo(...pt(e));pad.stroke()}};c.onpointerup=()=>drawing=false}
+const loadImg=u=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=u});
+async function stampPng(comment){
+  const {data:sg}=await sb.from('signatures').select('img').eq('user_id',me.id).maybeSingle();
+  if(!sg)throw new Error('ยังไม่ได้ตั้งลายเซ็น ไปที่แท็บ "ลายเซ็น" ก่อน');
+  await document.fonts.load('28px Sarabun');
+  const c=document.createElement('canvas');c.width=1000;c.height=560;const x=c.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,1000,560);x.strokeStyle='#888';x.lineWidth=2;x.strokeRect(2,2,996,556);
+  x.fillStyle='#111';x.font='600 30px Sarabun, sans-serif';x.fillText('ความเห็นและการลงนาม',30,50);
+  x.font='28px Sarabun, sans-serif';
+  const words=(comment||'(ไม่มีความเห็น)').split('');let line='',y=100;
+  for(const ch of words){if(x.measureText(line+ch).width>940){x.fillText(line,30,y);y+=38;line=''}line+=ch;if(y>250)break}
+  x.fillText(line,30,y);
+  x.drawImage(await loadImg(sg.img),560,290,380,170);
+  x.fillText('('+me.full_name+')',560,490);x.font='24px Sarabun, sans-serif';
+  x.fillText(ROLE[me.role]+(me.department?' '+me.department:'')+' · '+new Date().toLocaleDateString('th-TH',{dateStyle:'long'}),360,530);
+  return c.toDataURL('image/png');
+}
+async function signedPdf(s,comment){
+  const {data,error}=await sb.storage.from('docs').download(s.file_path);if(error)throw error;
+  const doc=await PDFLib.PDFDocument.load(await data.arrayBuffer());
+  const img=await doc.embedPng(await stampPng(comment));
+  const pg=doc.addPage([595,842]);const w=500,h=w*560/1000;pg.drawImage(img,{x:48,y:842-60-h,width:w,height:h});
+  const path=`${s.id}/${Date.now()}.pdf`;
+  const up=await sb.storage.from('docs').upload(path,new Blob([await doc.save()],{type:'application/pdf'}));if(up.error)throw up.error;
+  return path;
+}
+async function rpc(sub,kind,to,comment,path){const {error}=await sb.rpc('act',{p_sub:sub,p_kind:kind,p_to:to||null,p_comment:comment||null,p_path:path||null});if(error)throw error}
+
+/* ----- events ----- */
+document.addEventListener('focusin',e=>typing=/INPUT|TEXTAREA|SELECT/.test(e.target.tagName));
+document.addEventListener('focusout',()=>{typing=false;if(pend){pend=false;setTimeout(render,50)}});
+document.addEventListener('change',async e=>{
+  if(e.target.dataset.a==='chg')fillSend();
+  if(e.target.dataset.u){const f=e.target.dataset.f;const {error}=await sb.from('profiles').update({[f]:e.target.value}).eq('id',e.target.dataset.u);msg=error?error.message:'';await loadAll();if(f==='role')render()}
+});
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-a]');if(!b||b.tagName==='SELECT')return;e.preventDefault();
+  const a=b.dataset.a,v=b.dataset.v;msg='';
+  try{
+    if(a==='login'||a==='signup'){
+      const em=$('#em').value,pw=$('#pw').value;
+      const r=a==='login'?await sb.auth.signInWithPassword({email:em,password:pw}):await sb.auth.signUp({email:em,password:pw,options:{data:{full_name:$('#fn').value}}});
+      if(r.error)throw r.error;if(a==='signup'&&!r.data.session){msg='สมัครแล้ว กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ';return loginView()}
+      return boot()}
+    if(a==='out'){await sb.auth.signOut();if(chan)sb.removeChannel(chan);me=null;return loginView()}
+    if(a==='tab'){tab=v;sel=null}
+    else if(a==='open'){sel=v}
+    else if(a==='back'){sel=null}
+    else if(a==='nopen'){const n=N.find(x=>x.id===v);await sb.from('notifications').update({read:true}).eq('id',v);sel=n.submission_id;await loadAll()}
+    else if(a==='view'){const {data,error}=await sb.storage.from('docs').createSignedUrl(v,300);if(error)throw error;window.open(data.signedUrl,'_blank');return}
+    else if(a==='clr'){pad.clearRect(0,0,9999,9999);return}
+    else if(a==='savesig'){const {error}=await sb.from('signatures').upsert({user_id:me.id,img:$('#pad').toDataURL('image/png')});if(error)throw error;msg='บันทึกลายเซ็นแล้ว'}
+    else if(a==='addt'){const t=$('#tt').value.trim();if(!t)throw new Error('กรุณาใส่ชื่องาน');const {error}=await sb.from('task_defs').insert({category_id:+$('#tc').value,title:t,due_date:$('#td').value||null});if(error)throw error;await loadAll()}
+    else if(a==='tgl'){const t=T.find(x=>x.id===v);await sb.from('task_defs').update({active:!t.active}).eq('id',v);await loadAll()}
+    else if(a==='send'){
+      const f=$('#sfile').files[0],title=$('#st').value.trim();
+      if(!f||!title)throw new Error('กรุณาใส่ชื่อเอกสารและเลือกไฟล์ PDF');if(f.type!=='application/pdf')throw new Error('รองรับเฉพาะไฟล์ PDF');
+      busy=true;render();const id=crypto.randomUUID(),path=`${id}/v0.pdf`;
+      const up=await sb.storage.from('docs').upload(path,f);if(up.error)throw up.error;
+      const ins=await sb.from('submissions').insert({id,category_id:+$('#sc').value,task_def_id:($('#std')&&$('#std').value)||null,title,file_path:path,status:'draft',holder:me.id});if(ins.error)throw ins.error;
+      await rpc(id,'forward',$('#sto').value,$('#scm').value,null);busy=false;await loadAll();tab='mine';msg='ส่งเอกสารแล้ว'}
+    else if(['fwd','ret','approve'].includes(a)){
+      const s=S.find(x=>x.id===sel),cm=$('#cm').value.trim();let path=null;busy=true;
+      if(a==='ret'){if(!cm)throw new Error('กรุณาเขียนเหตุผลที่ส่งคืน');await rpc(s.id,'return',$('#bk').value,cm)}
+      else{
+        if(me.role==='teacher'){const f=$('#nf')&&$('#nf').files[0];if(f){path=`${s.id}/${Date.now()}.pdf`;const up=await sb.storage.from('docs').upload(path,f);if(up.error)throw up.error}}
+        else path=await signedPdf(s,cm);
+        await rpc(s.id,a==='approve'?'approve':'forward',a==='fwd'?$('#to').value:null,cm,path)}
+      busy=false;sel=null;await loadAll();msg='ดำเนินการเรียบร้อย'}
+  }catch(err){busy=false;msg=err.message||String(err)}
+  render();if(tab==='send'&&!sel)fillSend();
+});
+const _r=render;render=function(){_r();if(tab==='send'&&!sel&&$('#sc')&&!$('#sto').options.length)fillSend()};
+boot().catch(e=>{$('#app').textContent='เริ่มระบบไม่สำเร็จ: '+e.message});
+</script>
+</body>
+</html>
