@@ -70,7 +70,7 @@ async function loadAll(soft){
   me=P.find(x=>x.id===user.id);
   if(soft){typing?pend=true:render()}
 }
-function th(m){const k=[['Invalid login credentials','อีเมลหรือรหัสผ่านไม่ถูกต้อง'],['already registered','อีเมลนี้สมัครไว้แล้ว ให้กด "เข้าสู่ระบบ"'],['Email not confirmed','ยังไม่ได้ยืนยันอีเมล กรุณาตรวจกล่องจดหมาย'],['rate limit','ส่งอีเมลถี่เกินไป กรุณารอสักครู่แล้วลองใหม่'],['valid email','รูปแบบอีเมลไม่ถูกต้อง']];for(const [a,b] of k)if(String(m).toLowerCase().includes(a.toLowerCase()))return b;return m}
+function th(m){if(!m||m==='{}'||m==='[object Object]')return 'เกิดข้อผิดพลาดเกี่ยวกับไฟล์ กรุณาลองใหม่ หากยังไม่ได้ให้แจ้งผู้ดูแลระบบ';const k=[['Invalid login credentials','อีเมลหรือรหัสผ่านไม่ถูกต้อง'],['already registered','อีเมลนี้สมัครไว้แล้ว ให้กด "เข้าสู่ระบบ"'],['Email not confirmed','ยังไม่ได้ยืนยันอีเมล กรุณาตรวจกล่องจดหมาย'],['rate limit','ส่งอีเมลถี่เกินไป กรุณารอสักครู่แล้วลองใหม่'],['valid email','รูปแบบอีเมลไม่ถูกต้อง']];for(const [a,b] of k)if(String(m).toLowerCase().includes(a.toLowerCase()))return b;return m}
 function loginView(){
   $('#app').innerHTML=`<div class="card" style="max-width:380px;margin:40px auto"><h1>เข้าสู่ระบบ</h1>${msg?`<div class="msg">${esc(msg)}</div>`:''}
   <label>อีเมล</label><input id="em" type="email"><label>รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label><input id="pw" type="password">
@@ -218,11 +218,11 @@ async function renderCover(c){
   return cv.toDataURL('image/png');
 }
 /* รวมหน้าปก + ไฟล์ PDF ต้นฉบับของครู แล้วอัปโหลดเป็นเวอร์ชันใหม่ */
-async function compose(c,id){
+async function compose(c,id,buf){
   const out=await PDFLib.PDFDocument.create();
   const pg=out.addPage([595.28,841.89]);pg.drawImage(await out.embedPng(await renderCover(c)),{x:0,y:0,width:595.28,height:841.89});
-  const {data,error}=await sb.storage.from('docs').download(c.orig);if(error)throw error;
-  const src=await PDFLib.PDFDocument.load(await data.arrayBuffer(),{ignoreEncryption:true});
+  if(!buf){const {data,error}=await sb.storage.from('docs').download(c.orig);if(error)throw new Error('ดาวน์โหลดไฟล์ต้นฉบับไม่สำเร็จ');buf=await data.arrayBuffer()}
+  const src=await PDFLib.PDFDocument.load(buf,{ignoreEncryption:true});
   (await out.copyPages(src,src.getPageIndices())).forEach(p=>out.addPage(p));
   const path=`${id}/${Date.now()}.pdf`;
   const up=await sb.storage.from('docs').upload(path,new Blob([await out.save()],{type:'application/pdf'}));if(up.error)throw up.error;
@@ -271,23 +271,23 @@ document.addEventListener('click',async e=>{
       const orig=`${id}/orig.pdf`;
       const up=await sb.storage.from('docs').upload(orig,f);if(up.error)throw up.error;
       const cover={no:$('#sno').value.trim(),date:today(),title,subject:(cat0.is_memo?'ขอเสนอ':'ขอนำส่ง')+title,catName:cat0.name,memo:cat0.is_memo,teacher:{name:me.full_name,sig},boxes:{},orig};
-      const path=await compose(cover,id);
+      const path=await compose(cover,id,await f.arrayBuffer());
       const ins=await sb.from('submissions').insert({id,category_id:cat0.id,task_def_id:td||null,title,file_path:path,status:'draft',holder:me.id});if(ins.error)throw ins.error;
       await rpc(id,'forward',$('#sto').value,$('#scm').value,path,cover);busy=false;await loadAll();tab='mine';msg='ส่งเอกสารแล้ว (สร้างบันทึกข้อความหน้าแรกให้เรียบร้อย)'}
     else if(['fwd','ret','approve'].includes(a)){
-      const s=S.find(x=>x.id===sel),cm=$('#cm').value.trim();let path=null,cover=null;busy=true;render();
+      const s=S.find(x=>x.id===sel),cm=$('#cm').value.trim();let path=null,cover=null,buf=null;busy=true;render();
       if(a==='ret'){if(!cm)throw new Error('กรุณาเขียนเหตุผลที่ส่งคืน');await rpc(s.id,'return',$('#bk').value,cm)}
       else{
         cover=JSON.parse(JSON.stringify(s.cover||{}));
         if(me.role==='teacher'){
           const f=$('#nf')&&$('#nf').files[0];
-          if(f){const o=`${s.id}/orig-${Date.now()}.pdf`;const up=await sb.storage.from('docs').upload(o,f);if(up.error)throw up.error;cover.orig=o}
+          if(f){const o=`${s.id}/orig-${Date.now()}.pdf`;const up=await sb.storage.from('docs').upload(o,f);if(up.error)throw up.error;cover.orig=o;buf=await f.arrayBuffer()}
           cover.teacher.sig=await mySig();cover.teacher.name=me.full_name;cover.date=today();cover.boxes={};
         }else{
           if(!cm)throw new Error('กรุณาเขียนความเห็นก่อนลงนาม');
           cover.boxes=cover.boxes||{};cover.boxes[me.role]={comment:cm,name:me.full_name,dept:me.department||'',date:today(),sig:await mySig()};
         }
-        path=await compose(cover,s.id);
+        path=await compose(cover,s.id,buf);
         await rpc(s.id,a==='approve'?'approve':'forward',a==='fwd'?$('#to').value:null,cm,path,cover)}
       busy=false;sel=null;await loadAll();msg='ดำเนินการเรียบร้อย'}
   }catch(err){busy=false;msg=th(err.message||String(err))}
