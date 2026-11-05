@@ -36,6 +36,11 @@ a{color:var(--pri)}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;j
 const SUPABASE_URL='https://qmqggwtjiuaextldmzmc.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_aoTXCDKRc_PdQkcMVw0Z3Q_kac0XWgP';
 /* ================================================================ */
+const SCHOOL='โรงเรียนท่าใหม่“พูลสวัสดิ์ราษฎร์นุกูล” สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาจันทบุรี ตราด';
+const TO_LINE='ผู้อำนวยการโรงเรียนท่าใหม่“พูลสวัสดิ์ราษฎร์นุกูล”';
+const SEMESTER='2/2569'; // แก้เป็นภาคเรียนปัจจุบันได้ที่นี่
+const EMBLEM='data:image/jpeg;base64,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';
+const BOXES=[['leader','ความเห็นหัวหน้าฝ่าย','หัวหน้าฝ่าย'],['vice','ความเห็นรองผู้อำนวยการฝ่าย','รองผู้อำนวยการ'],['principal','ความเห็นผู้อำนวยการ','ผู้อำนวยการ']];
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -76,7 +81,7 @@ function render(){
   if(!me)return;
   const unread=N.filter(n=>!n.read).length;
   const r=me.role,tabs=[];
-  if(r==='teacher')tabs.push(['send','ส่งงาน'],['mine','งานของฉัน']);
+  if(r==='teacher')tabs.push(['send','ส่งงาน'],['mine','งานของฉัน'],['sign','ลายเซ็น']);
   else if(r!=='admin')tabs.push(['todo','รอดำเนินการ'],['mine','ผ่านมือฉัน'],['sign','ลายเซ็น']);
   if(r==='principal'||r==='admin')tabs.push(['check','ความครบถ้วน']);
   if(r==='admin')tabs.push(['tasks','กำหนดงาน'],['users','ผู้ใช้']);
@@ -99,8 +104,8 @@ function vSend(){
   const mine=S.filter(s=>s.teacher_id===me.id);
   const todo=T.filter(t=>t.active&&!mine.some(s=>s.task_def_id===t.id&&s.status!=='draft'));
   return `${todo.length?`<div class="card"><b>งานที่ยังไม่ได้ส่ง</b>${todo.map(t=>`<div>• ${esc(t.title)} <span class="mut">${esc(cat(t.category_id).name)} ${t.due_date?'· กำหนด '+t.due_date:''}</span></div>`).join('')}</div>`:''}
-  <div class="card"><b>ส่งไฟล์ PDF</b><label>หมวดหมู่</label><select id="sc" data-a="chg">${opts(C,c=>c.name)}</select>
-  <div id="sf"></div><label>ชื่อเอกสาร</label><input id="st"><label>ไฟล์ PDF</label><input id="sfile" type="file" accept="application/pdf">
+  <div class="card"><b>ส่งไฟล์ PDF</b><div class="mut">ระบบจะสร้างบันทึกข้อความเป็นหน้าแรกของไฟล์ให้อัตโนมัติ</div><label>หมวดหมู่</label><select id="sc" data-a="chg">${opts(C,c=>c.name)}</select>
+  <div id="sf"></div><label>เรื่อง / ชื่อเอกสาร (ถ้าเลือกงานที่กำหนด ไม่ต้องกรอกก็ได้)</label><input id="st"><label>ที่ (เลขที่บันทึก ถ้ามี)</label><input id="sno"><label>ไฟล์ PDF</label><input id="sfile" type="file" accept="application/pdf">
   <label>ส่งให้</label><select id="sto"></select><label>ข้อความถึงผู้รับ (ถ้ามี)</label><input id="scm">
   <button class="btn" data-a="send">${busy?'กำลังส่ง…':'ส่งเอกสาร'}</button></div>`}
 function fillSend(){ // อัปเดตช่องงาน/ผู้รับตามหมวดที่เลือก
@@ -109,7 +114,7 @@ function fillSend(){ // อัปเดตช่องงาน/ผู้รั�
   const tg=fwdTargets(me,c.is_memo).sort((a,b)=>(b.department===me.department)-(a.department===me.department));
   $('#sto').innerHTML=opts(tg,lbl);
 }
-function vSign(){return `<div class="card"><b>ลายเซ็นของคุณ</b><div class="mut">วาดครั้งเดียว ระบบจะใช้ประทับทุกครั้งที่ลงนาม</div><canvas id="pad"></canvas>
+function vSign(){return `<div class="card"><b>ลายเซ็นของคุณ</b><div class="mut">วาดครั้งเดียว ระบบจะนำไปใส่ในบันทึกข้อความทุกครั้งที่ลงชื่อ (ใช้นิ้วหรือเมาส์วาดในกรอบ)</div><canvas id="pad"></canvas>
   <button class="btn ghost" data-a="clr">ล้าง</button><button class="btn" data-a="savesig">บันทึกลายเซ็น</button></div>`}
 
 function vDetail(){
@@ -123,7 +128,7 @@ function vDetail(){
     const isT=me.role==='teacher',isP=me.role==='principal';
     act=`<div class="card"><b>ดำเนินการ</b>
     ${isT?`<label>แนบไฟล์ใหม่ (ถ้าแก้ไขแล้ว)</label><input id="nf" type="file" accept="application/pdf">`:''}
-    <label>ความเห็น${isT?'':' (จะประทับในไฟล์)'}</label><textarea id="cm" rows="3"></textarea>
+    <label>ความเห็น${isT?'':' (จะลงในช่องความเห็นของหน้าบันทึกข้อความ)'}</label><textarea id="cm" rows="3"></textarea>
     ${isP?`<button class="btn" data-a="approve">✍️ ลงนามและอนุมัติรับเข้าระบบ</button>`:`<label>เสนอต่อ</label><select id="to">${opts(fw,lbl)}</select><button class="btn" data-a="fwd">${isT?'ส่งต่อ':'✍️ ลงนามและเสนอต่อ'}</button>`}
     ${isT?'':`<hr><label>ส่งคืนให้แก้ไข</label><select id="bk">${opts(back.map(pf),lbl)}</select><button class="btn bad" data-a="ret">ส่งคืน</button>`}</div>`}
   return `<button class="btn ghost" data-a="back">← กลับ</button><div class="card"><b>${esc(s.title)}</b>
@@ -153,32 +158,81 @@ function initPad(){const c=$('#pad');c.width=c.clientWidth*2;c.height=260;pad=c.
   c.onpointerdown=e=>{drawing=true;pad.beginPath();pad.moveTo(...pt(e));c.setPointerCapture(e.pointerId)};
   c.onpointermove=e=>{if(drawing){pad.lineTo(...pt(e));pad.stroke()}};c.onpointerup=()=>drawing=false}
 const loadImg=u=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=u});
-async function stampPng(comment){
-  const {data:sg}=await sb.from('signatures').select('img').eq('user_id',me.id).maybeSingle();
-  if(!sg)throw new Error('ยังไม่ได้ตั้งลายเซ็น ไปที่แท็บ "ลายเซ็น" ก่อน');
-  await document.fonts.load('28px Sarabun');
-  const c=document.createElement('canvas');c.width=1000;c.height=560;const x=c.getContext('2d');
-  x.fillStyle='#fff';x.fillRect(0,0,1000,560);x.strokeStyle='#888';x.lineWidth=2;x.strokeRect(2,2,996,556);
-  x.fillStyle='#111';x.font='600 30px Sarabun, sans-serif';x.fillText('ความเห็นและการลงนาม',30,50);
-  x.font='28px Sarabun, sans-serif';
-  const words=(comment||'(ไม่มีความเห็น)').split('');let line='',y=100;
-  for(const ch of words){if(x.measureText(line+ch).width>940){x.fillText(line,30,y);y+=38;line=''}line+=ch;if(y>250)break}
-  x.fillText(line,30,y);
-  x.drawImage(await loadImg(sg.img),560,290,380,170);
-  x.fillText('('+me.full_name+')',560,490);x.font='24px Sarabun, sans-serif';
-  x.fillText(ROLE[me.role]+(me.department?' '+me.department:'')+' · '+new Date().toLocaleDateString('th-TH',{dateStyle:'long'}),360,530);
-  return c.toDataURL('image/png');
+async function mySig(){
+  const {data}=await sb.from('signatures').select('img').eq('user_id',me.id).maybeSingle();
+  if(!data)throw new Error('ยังไม่ได้ตั้งลายเซ็น ไปที่แท็บ "ลายเซ็น" ก่อน');return data.img}
+const today=()=>new Date().toLocaleDateString('th-TH',{dateStyle:'long'});
+
+/* วาดหน้าบันทึกข้อความ (A4) เป็นภาพ — ภาษาไทยแสดงถูกต้องเพราะใช้ฟอนต์ของเบราว์เซอร์ */
+async function renderCover(c){
+  await document.fonts.load('36px Sarabun');await document.fonts.load('600 36px Sarabun');
+  const W=1240,H=1754,LM=150,RM=1090,cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.fillStyle='#000';x.textBaseline='alphabetic';
+  const seg=new Intl.Segmenter('th',{granularity:'word'});
+  const font=(b,px)=>x.font=(b?'600 ':'')+px+'px Sarabun, sans-serif';
+  // เขียนข้อความหลายช่วง (ตัวหนา/ขีดเส้นใต้) พร้อมตัดบรรทัด; ind = ย่อหน้าบรรทัดแรก
+  function para(segs,y,{px=36,lh=52,ind=0,left=LM,right=RM}={}){
+    let cx=left+ind;
+    for(const sg of segs)for(const w of seg.segment(sg.t)){
+      font(sg.b,px);const t=w.segment,wd=x.measureText(t).width;
+      if(cx+wd>right&&t.trim()){cx=left;y+=lh}
+      if(cx===left&&!t.trim())continue;
+      x.fillText(t,cx,y);
+      if(sg.u){x.fillRect(cx,y+6,wd,2)}
+      cx+=wd}
+    return y+lh}
+  const img=async u=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=u});
+  const emb=await img(EMBLEM);x.drawImage(emb,LM,95,120,126);
+  font(1,54);x.textAlign='center';x.fillText('บันทึกข้อความ',W/2,180);x.textAlign='left';
+  let y=275;
+  y=para([{t:'ส่วนราชการ',b:1},{t:'   '+SCHOOL}],y,{ind:30});
+  y=para([{t:'ที่',b:1},{t:'  '+(c.no||'..............................')+'          '},{t:'วันที่',b:1},{t:'  '+c.date}],y);
+  y=para([{t:'เรื่อง',b:1},{t:'   '+c.subject}],y);
+  x.fillRect(LM,y-34,RM-LM,2);y+=14;
+  y=para([{t:'เรียน',b:1},{t:'   '+TO_LINE}],y);
+  y+=8;
+  let body;
+  if(c.memo)body=[{t:'ด้วยข้าพเจ้า '+c.teacher.name+' ขอเสนอ '},{t:c.title,u:1},{t:' เพื่อโปรดพิจารณาลงนาม ดังเอกสารแนบท้ายนี้'}];
+  else body=[{t:'ด้วยข้าพเจ้า '+c.teacher.name+' ได้รับมอบหมายให้จัดการเรียนการสอนตามหลักสูตรสถานศึกษา สำหรับภาคเรียนที่ '+SEMESTER+' จึงขอนำส่งงาน '},{t:c.catName.replace(/^งาน/,''),u:1},{t:' ได้แก่ '},{t:c.title,u:1},{t:' ดังเอกสารแนบท้ายนี้'}];
+  y=para(body,y,{ind:100});
+  y=para([{t:c.memo?'จึงเรียนมาเพื่อโปรดพิจารณา':'จึงเรียนมาเพื่อโปรดทราบ'}],y+8,{ind:100});
+  // ลายเซ็นครู
+  const tx=560;font(0,36);x.fillText('ลงชื่อ',tx,y+80);
+  if(c.teacher.sig){const si=await img(c.teacher.sig);const r=Math.min(300/si.width,90/si.height);x.drawImage(si,tx+90+(320-si.width*r)/2,y+80-si.height*r-2,si.width*r,si.height*r)}
+  x.fillRect(tx+90,y+84,320,0);x.setLineDash([3,5]);x.beginPath();x.moveTo(tx+90,y+82);x.lineTo(tx+420,y+82);x.stroke();x.setLineDash([]);
+  x.textAlign='center';font(0,36);x.fillText('('+c.teacher.name+')',tx+255,y+130);x.textAlign='left';
+  y+=165;
+  // ช่องความเห็น
+  async function box(bx,by,bw,bh,[key,title,pos]){
+    x.strokeStyle='#000';x.lineWidth=2;x.strokeRect(bx,by,bw,bh);
+    x.textAlign='center';font(1,34);x.fillText(title,bx+bw/2,by+42);x.fillRect(bx,by+58,bw,2);x.textAlign='left';
+    const b=(c.boxes||{})[key];
+    if(!b){font(0,30);x.fillStyle='#777';x.fillText('...........................................................',bx+16,by+105);x.fillText('(..............................)  '+pos+' ........',bx+16,bh-22+by);x.fillStyle='#000';return}
+    let yy=para([{t:'- '+b.comment}],by+104,{px:30,lh:38,left:bx+16,right:bx+bw-16});
+    const si=await img(b.sig);const r=Math.min((bw*0.5)/si.width,70/si.height);
+    x.drawImage(si,bx+bw/2-si.width*r/2,by+bh-178,si.width*r,si.height*r);
+    x.textAlign='center';font(0,30);x.fillText('('+b.name+')',bx+bw/2,by+bh-96);
+    x.fillText(pos+(b.dept?' '+b.dept:''),bx+bw/2,by+bh-58);x.fillText('วันที่ '+b.date,bx+bw/2,by+bh-20);x.textAlign='left'}
+  const hw=(RM-LM)/2;
+  await box(LM,y,hw,330,BOXES[0]);await box(LM+hw,y,hw,330,BOXES[1]);await box(LM,y+330,RM-LM,300,BOXES[2]);
+  return cv.toDataURL('image/png');
 }
-async function signedPdf(s,comment){
-  const {data,error}=await sb.storage.from('docs').download(s.file_path);if(error)throw error;
-  const doc=await PDFLib.PDFDocument.load(await data.arrayBuffer());
-  const img=await doc.embedPng(await stampPng(comment));
-  const pg=doc.addPage([595,842]);const w=500,h=w*560/1000;pg.drawImage(img,{x:48,y:842-60-h,width:w,height:h});
-  const path=`${s.id}/${Date.now()}.pdf`;
-  const up=await sb.storage.from('docs').upload(path,new Blob([await doc.save()],{type:'application/pdf'}));if(up.error)throw up.error;
-  return path;
-}
-async function rpc(sub,kind,to,comment,path){const {error}=await sb.rpc('act',{p_sub:sub,p_kind:kind,p_to:to||null,p_comment:comment||null,p_path:path||null});if(error)throw error}
+/* รวมหน้าปก + ไฟล์ PDF ต้นฉบับของครู แล้วอัปโหลดเป็นเวอร์ชันใหม่ */
+async function compose(c,id){
+  const out=await PDFLib.PDFDocument.create();
+  const pg=out.addPage([595.28,841.89]);pg.drawImage(await out.embedPng(await renderCover(c)),{x:0,y:0,width:595.28,height:841.89});
+  const {data,error}=await sb.storage.from('docs').download(c.orig);if(error)throw error;
+  const src=await PDFLib.PDFDocument.load(await data.arrayBuffer(),{ignoreEncryption:true});
+  (await out.copyPages(src,src.getPageIndices())).forEach(p=>out.addPage(p));
+  const path=`${id}/${Date.now()}.pdf`;
+  const up=await sb.storage.from('docs').upload(path,new Blob([await out.save()],{type:'application/pdf'}));if(up.error)throw up.error;
+  return path}
+function cropSig(canvas){ // ตัดขอบว่างของลายเซ็นออก
+  const x=canvas.getContext('2d'),d=x.getImageData(0,0,canvas.width,canvas.height).data;let x0=1e9,y0=1e9,x1=0,y1=0;
+  for(let i=0;i<d.length;i+=4)if(d[i+3]>20){const p=i/4,px=p%canvas.width,py=(p/canvas.width)|0;x0=Math.min(x0,px);x1=Math.max(x1,px);y0=Math.min(y0,py);y1=Math.max(y1,py)}
+  if(x1<=x0)throw new Error('กรุณาวาดลายเซ็นก่อน');
+  const m=10,w=x1-x0+2*m,h=y1-y0+2*m,o=document.createElement('canvas');o.width=w;o.height=h;o.getContext('2d').drawImage(canvas,x0-m,y0-m,w,h,0,0,w,h);return o.toDataURL('image/png')}
+async function rpc(sub,kind,to,comment,path,cover){const {error}=await sb.rpc('act',{p_sub:sub,p_kind:kind,p_to:to||null,p_comment:comment||null,p_path:path||null,p_cover:cover||null});if(error)throw error}
 
 /* ----- events ----- */
 document.addEventListener('focusin',e=>typing=/INPUT|TEXTAREA|SELECT/.test(e.target.tagName));
@@ -206,23 +260,35 @@ document.addEventListener('click',async e=>{
     else if(a==='nopen'){const n=N.find(x=>x.id===v);await sb.from('notifications').update({read:true}).eq('id',v);sel=n.submission_id;await loadAll()}
     else if(a==='view'){const {data,error}=await sb.storage.from('docs').createSignedUrl(v,300);if(error)throw error;window.open(data.signedUrl,'_blank');return}
     else if(a==='clr'){pad.clearRect(0,0,9999,9999);return}
-    else if(a==='savesig'){const {error}=await sb.from('signatures').upsert({user_id:me.id,img:$('#pad').toDataURL('image/png')});if(error)throw error;msg='บันทึกลายเซ็นแล้ว'}
+    else if(a==='savesig'){const {error}=await sb.from('signatures').upsert({user_id:me.id,img:cropSig($('#pad'))});if(error)throw error;msg='บันทึกลายเซ็นแล้ว'}
     else if(a==='addt'){const t=$('#tt').value.trim();if(!t)throw new Error('กรุณาใส่ชื่องาน');const {error}=await sb.from('task_defs').insert({category_id:+$('#tc').value,title:t,due_date:$('#td').value||null});if(error)throw error;await loadAll()}
     else if(a==='tgl'){const t=T.find(x=>x.id===v);await sb.from('task_defs').update({active:!t.active}).eq('id',v);await loadAll()}
     else if(a==='send'){
-      const f=$('#sfile').files[0],title=$('#st').value.trim();
-      if(!f||!title)throw new Error('กรุณาใส่ชื่อเอกสารและเลือกไฟล์ PDF');if(f.type!=='application/pdf')throw new Error('รองรับเฉพาะไฟล์ PDF');
-      busy=true;render();const id=crypto.randomUUID(),path=`${id}/v0.pdf`;
-      const up=await sb.storage.from('docs').upload(path,f);if(up.error)throw up.error;
-      const ins=await sb.from('submissions').insert({id,category_id:+$('#sc').value,task_def_id:($('#std')&&$('#std').value)||null,title,file_path:path,status:'draft',holder:me.id});if(ins.error)throw ins.error;
-      await rpc(id,'forward',$('#sto').value,$('#scm').value,null);busy=false;await loadAll();tab='mine';msg='ส่งเอกสารแล้ว'}
+      const f=$('#sfile').files[0],td=$('#std')&&$('#std').value,tdr=T.find(t=>t.id===td),title=$('#st').value.trim()||(tdr&&tdr.title)||'';
+      if(!f||!title)throw new Error('กรุณาใส่ชื่อเอกสาร (หรือเลือกงานที่กำหนด) และเลือกไฟล์ PDF');if(f.type!=='application/pdf')throw new Error('รองรับเฉพาะไฟล์ PDF');
+      const sig=await mySig();
+      busy=true;render();const id=crypto.randomUUID(),cat0=C.find(c=>c.id==$('#sc').value);
+      const orig=`${id}/orig.pdf`;
+      const up=await sb.storage.from('docs').upload(orig,f);if(up.error)throw up.error;
+      const cover={no:$('#sno').value.trim(),date:today(),title,subject:(cat0.is_memo?'ขอเสนอ':'ขอนำส่ง')+title,catName:cat0.name,memo:cat0.is_memo,teacher:{name:me.full_name,sig},boxes:{},orig};
+      const path=await compose(cover,id);
+      const ins=await sb.from('submissions').insert({id,category_id:cat0.id,task_def_id:td||null,title,file_path:path,status:'draft',holder:me.id});if(ins.error)throw ins.error;
+      await rpc(id,'forward',$('#sto').value,$('#scm').value,path,cover);busy=false;await loadAll();tab='mine';msg='ส่งเอกสารแล้ว (สร้างบันทึกข้อความหน้าแรกให้เรียบร้อย)'}
     else if(['fwd','ret','approve'].includes(a)){
-      const s=S.find(x=>x.id===sel),cm=$('#cm').value.trim();let path=null;busy=true;
+      const s=S.find(x=>x.id===sel),cm=$('#cm').value.trim();let path=null,cover=null;busy=true;render();
       if(a==='ret'){if(!cm)throw new Error('กรุณาเขียนเหตุผลที่ส่งคืน');await rpc(s.id,'return',$('#bk').value,cm)}
       else{
-        if(me.role==='teacher'){const f=$('#nf')&&$('#nf').files[0];if(f){path=`${s.id}/${Date.now()}.pdf`;const up=await sb.storage.from('docs').upload(path,f);if(up.error)throw up.error}}
-        else path=await signedPdf(s,cm);
-        await rpc(s.id,a==='approve'?'approve':'forward',a==='fwd'?$('#to').value:null,cm,path)}
+        cover=JSON.parse(JSON.stringify(s.cover||{}));
+        if(me.role==='teacher'){
+          const f=$('#nf')&&$('#nf').files[0];
+          if(f){const o=`${s.id}/orig-${Date.now()}.pdf`;const up=await sb.storage.from('docs').upload(o,f);if(up.error)throw up.error;cover.orig=o}
+          cover.teacher.sig=await mySig();cover.teacher.name=me.full_name;cover.date=today();cover.boxes={};
+        }else{
+          if(!cm)throw new Error('กรุณาเขียนความเห็นก่อนลงนาม');
+          cover.boxes=cover.boxes||{};cover.boxes[me.role]={comment:cm,name:me.full_name,dept:me.department||'',date:today(),sig:await mySig()};
+        }
+        path=await compose(cover,s.id);
+        await rpc(s.id,a==='approve'?'approve':'forward',a==='fwd'?$('#to').value:null,cm,path,cover)}
       busy=false;sel=null;await loadAll();msg='ดำเนินการเรียบร้อย'}
   }catch(err){busy=false;msg=th(err.message||String(err))}
   if(!me)return loginView();
